@@ -19,10 +19,12 @@
         let canvasWidth = 600
         let canvasHeight = 600
         let foodSize = 15
+        let snakeSizeX = 30
+        let snakeSizeY = 30
         let snakeSize = 30
 
         startGame = () => {
-            snake = new component(snakeSize, snakeSize, 'red', snakeSize, canvasHeight - 2*snakeSize)
+            snake = new component(snakeSizeX, snakeSizeY, 'red', snakeSizeX, canvasHeight - 2*snakeSizeX)
             food = new component(foodSize, foodSize, 'black', (Math.random()*canvasHeight - foodSize), Math.random()*canvasWidth - foodSize)
             myGameArea.start();
             snake.x += 3
@@ -40,17 +42,16 @@
                 myGameArea.key = e.keyCode
               })
               window.addEventListener('keyup', function (e) {
-                <!-- console.log('up', e) -->
                 myGameArea.key = !e.keyCode // check if this is false 
               })
             },
             clear() {
               this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
             },
-//            stop() {
-  //              clearInterval(this.interval)
-    //        }
-                }
+            stop : function() {
+                clearInterval(this.interval);
+              }
+        }
 
         function component(width, height, color, x, y) {
             this.gamearea = myGameArea;
@@ -58,7 +59,6 @@
             this.height = height;
             this.speedX = 0;
             this.speedY = 0;   
-            console.log('x', this.x) 
             this.x = x;
             this.y = y;    
             this.update = function() {
@@ -66,31 +66,62 @@
                 ctx.fillStyle = color;
                 ctx.fillRect(this.x, this.y, this.width, this.height);
             }
+
             this.crashWith = function(otherobj) {
-                let myleft = this.x;
-                let myright = this.x + (this.width);
-                let mytop = this.y;
-                let mybottom = this.y + (this.height);
+                let myLeft = this.x;
+                let myRight = this.x + (this.width);
+                let myTop = this.y;
+                let myBottom = this.y + (this.height);
                 let otherleft = otherobj.x;
                 let otherright = otherobj.x + (otherobj.width);
                 let othertop = otherobj.y;
                 let otherbottom = otherobj.y + (otherobj.height);
                 let crash = true;
-                if ((mybottom < othertop) ||
-                    (mytop > otherbottom) ||
-                    (myright < otherleft) ||
-                    (myleft > otherright)) {
-                    crash = false;
-                }
-                    return crash;
+                if ((myBottom < othertop) ||
+                    (myTop > otherbottom) ||
+                    (myRight < otherleft) ||
+                    (myLeft > otherright)) {
+                        crash = false;
+                } else if ((myBottom > othertop) ||
+                           (myTop < otherbottom)) {
+                            console.log(snakeSizeX, snakeSizeY)
+                                snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y)
+                } else if ((myRight > otherleft) ||
+                            (myLeft < otherright)) {
+                                console.log(snakeSizeX, snakeSizeY)
+                                snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x,this.y)
+                                }
+
+                    return (crash);
               }
+            this.crashBorder = function() {
+                let myLeft = this.x;
+                let myRight = this.x + (this.width);
+                let myTop = this.y;
+                let myBottom = this.y + (this.height);
+                topBorder = canvasHeight - snakeSizeX;
+                bottomBorder = snakeSizeX ;
+                leftBorder = 0;
+                rightBorder = canvasWidth
+                let crash = false;
+                if ((myBottom < bottomBorder) ||
+                    (myRight > rightBorder) ||
+                    (myTop > topBorder) ||
+                    (myLeft < leftBorder)) {
+                        crash=true
+                    }
+                    return crash;
+            }
           }
 
           let xSpeed = 0
           let ySpeed = 0
           updateGameArea = () => {
             if (snake.crashWith(food)) {
-                food
+                food = new component(foodSize, foodSize, 'black', Math.random()*canvasHeight - 2*foodSize, Math.random()*canvasWidth - 2*foodSize)
+            } else if (snake.crashBorder()) {
+                console.log('border')
+                myGameArea.stop();
             } else {
                 myGameArea.clear();
                 if (myGameArea.key && myGameArea.key == 37 || myGameArea.key == 65) {
@@ -106,12 +137,12 @@
                     xSpeed = 0;
                     ySpeed = 5;
                 } 
-                console.log(xSpeed)
-                snake.x += xSpeed
-                snake.y += ySpeed
-                snake.update();
-                food.update()
+
               }
+              snake.x += xSpeed
+              snake.y += ySpeed
+              snake.update();
+              food.update();
           }
     </script>
 </head>

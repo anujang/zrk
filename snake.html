@@ -16,6 +16,8 @@
 
     <script>
         let snake;
+        let food;
+        let restartBtn;
         let canvasWidth = 600
         let canvasHeight = 600
         let foodSize = 15
@@ -44,6 +46,23 @@
               window.addEventListener('keyup', function (e) {
                 myGameArea.key = !e.keyCode // check if this is false 
               })
+              window.addEventListener('mousedown', function (e) {
+                console.log(e.pageY)
+                myGameArea.x = e.pageX;
+                myGameArea.y = e.pageY;
+              })
+              window.addEventListener('mouseup', function (e) {
+                myGameArea.x = false;
+                myGameArea.y = false;
+              })
+              window.addEventListener('touchstart', function (e) {
+                myGameArea.x = e.pageX;
+                myGameArea.y = e.pageY;
+            })
+            window.addEventListener('touchend', function (e) {
+                myGameArea.x = false;
+                myGameArea.y = false;
+            })
             },
             clear() {
               this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -53,12 +72,35 @@
               }
         }
 
-        function component(width, height, color, x, y) {
-            this.gamearea = myGameArea;
+        function btn(width, height, color, x, y) {
             this.width = width;
             this.height = height;
             this.speedX = 0;
-            this.speedY = 0;   
+            this.speedY = 0;
+            this.x = x;
+            this.y = y;    
+            this.update = function() {
+                ctx = myGameArea.context;
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            this.clicked = function() {
+                console.log('clicked', myGameArea.y)
+                var myleft = this.x;
+                var myright = this.x + (this.width);
+                var mytop = this.y;
+                var mybottom = this.y + (this.height);
+                var clicked = true;
+                if ((mybottom > myGameArea.y) || (mytop < myGameArea.y) || (myright > myGameArea.x) || (myleft < myGameArea.x)) {
+                    clicked = false;
+                }
+                return clicked;
+            }
+        }
+        function component(width, height, color, x, y) {
+            this.gamearea = myGameArea;
+            this.width = width;
+            this.height = height;  
             this.x = x;
             this.y = y;    
             this.update = function() {
@@ -67,30 +109,30 @@
                 ctx.fillRect(this.x, this.y, this.width, this.height);
             }
 
-            this.crashWith = function(otherobj) {
+            this.crashWith = function(otherObj) {
                 let myLeft = this.x;
                 let myRight = this.x + (this.width);
                 let myTop = this.y;
                 let myBottom = this.y + (this.height);
-                let otherleft = otherobj.x;
-                let otherright = otherobj.x + (otherobj.width);
-                let othertop = otherobj.y;
-                let otherbottom = otherobj.y + (otherobj.height);
+                let otherLeft = otherObj.x;
+                let otherRight = otherObj.x + (otherObj.width);
+                let otherTop = otherObj.y;
+                let otherBottom = otherObj.y + (otherObj.height);
                 let crash = true;
-                if ((myBottom < othertop) ||
-                    (myTop > otherbottom) ||
-                    (myRight < otherleft) ||
-                    (myLeft > otherright)) {
+                if ((myBottom < otherTop) ||
+                    (myTop > otherBottom) ||
+                    (myRight < otherLeft) ||
+                    (myLeft > otherRight)) {
                         crash = false;
-                } else if ((myBottom > othertop) ||
-                           (myTop < otherbottom)) {
-                            console.log(snakeSizeX, snakeSizeY)
-                                snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y)
-                } else if ((myRight > otherleft) ||
-                            (myLeft < otherright)) {
-                                console.log(snakeSizeX, snakeSizeY)
-                                snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x,this.y)
-                                }
+                } else if (ySpeed & myBottom > otherTop) {
+                    snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y-snakeSize)
+                } else if (ySpeed & myTop < otherBottom) {
+                    snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y+snakeSize)
+                } else if (xSpeed & myLeft < otherRight) {
+                    snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x-snakeSize,this.y)
+                } else if (xSpeed & myRight > otherLeft) {
+                    snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x-snakeSize,this.y)
+                    }
 
                     return (crash);
               }
@@ -120,8 +162,18 @@
             if (snake.crashWith(food)) {
                 food = new component(foodSize, foodSize, 'black', Math.random()*canvasHeight - 2*foodSize, Math.random()*canvasWidth - 2*foodSize)
             } else if (snake.crashBorder()) {
-                console.log('border')
+                restartBtn = new btn(50, 20, 'purple', 500,40)
+                restartBtn.update();
+                console.log('clicked?',restartBtn.clicked())
                 myGameArea.stop();
+                    if (restartBtn.clicked()) {
+                        let xSpeed = 0
+                        let ySpeed = 0
+                        let snakeSizeX = 30
+                        let snakeSizeY = 30
+                        let snakeSize = 30
+                        startGame()
+                    }
             } else {
                 myGameArea.clear();
                 if (myGameArea.key && myGameArea.key == 37 || myGameArea.key == 65) {

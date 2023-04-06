@@ -9,8 +9,12 @@
     <style>
         body {background-color: lightblue;}
         canvas {
-            border: 1px solid black;  
-            background-color: white;
+            border: 1px solid white;  
+            background-color:black;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 
@@ -19,15 +23,18 @@
         let food;
         let restartBtn;
         let canvasWidth = 600
-        let canvasHeight = 600
+        let canvasHeight = 700
         let foodSize = 15
-        let snakeSizeX = 30
-        let snakeSizeY = 30
-        let snakeSize = 30
+        let snakeSizeX = 20
+        let snakeSizeY = 20
+        let snakeSize = 20
 
         startGame = () => {
-            snake = new component(snakeSizeX, snakeSizeY, 'red', snakeSizeX, canvasHeight - 2*snakeSizeX)
-            food = new component(foodSize, foodSize, 'black', (Math.random()*canvasHeight - foodSize), Math.random()*canvasWidth - foodSize)
+            snake = new component(snakeSizeX, snakeSizeY, 'lightblue', 'darkblue', snakeSizeX, canvasHeight - 2*snakeSizeX)
+            food = new component(foodSize, foodSize, 'bisque', 'burlywood', Math.abs(Math.random()*canvasWidth - 3*foodSize), 
+            Math.abs(Math.random()*(canvasHeight-100) + foodSize +100), false, true)           
+            header = new component(canvasWidth, 100, 'lightgray', 'darkgrey', 0,0)
+            pause = new component(30, 30, 'red','maroon', canvasWidth - 60, 30, true)
             myGameArea.start();
             snake.x += 3
         }
@@ -44,7 +51,7 @@
                 myGameArea.key = e.keyCode
               })
               window.addEventListener('keyup', function (e) {
-                myGameArea.key = !e.keyCode // check if this is false 
+                myGameArea.key = !e.keyCode 
               })
               window.addEventListener('mousedown', function (e) {
                 console.log(e.pageY)
@@ -72,40 +79,19 @@
               }
         }
 
-        function btn(width, height, color, x, y) {
-            this.width = width;
-            this.height = height;
-            this.speedX = 0;
-            this.speedY = 0;
-            this.x = x;
-            this.y = y;    
-            this.update = function() {
-                ctx = myGameArea.context;
-                ctx.fillStyle = color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            }
-            this.clicked = function() {
-                console.log('clicked', myGameArea.y)
-                var myleft = this.x;
-                var myright = this.x + (this.width);
-                var mytop = this.y;
-                var mybottom = this.y + (this.height);
-                var clicked = true;
-                if ((mybottom > myGameArea.y) || (mytop < myGameArea.y) || (myright > myGameArea.x) || (myleft < myGameArea.x)) {
-                    clicked = false;
-                }
-                return clicked;
-            }
-        }
-        function component(width, height, color, x, y) {
+        function component(width, height, color, border, x, y, clickable = false, testing=false) {
             this.gamearea = myGameArea;
             this.width = width;
             this.height = height;  
             this.x = x;
-            this.y = y;    
+            this.y = y; 
+            if (testing) {
+                console.log(this.x, this.y)
+            }
             this.update = function() {
                 ctx = myGameArea.context;
                 ctx.fillStyle = color;
+                ctx.strokeStyle = border;
                 ctx.fillRect(this.x, this.y, this.width, this.height);
             }
 
@@ -124,77 +110,102 @@
                     (myRight < otherLeft) ||
                     (myLeft > otherRight)) {
                         crash = false;
-                } else if (ySpeed & myBottom > otherTop) {
-                    snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y-snakeSize)
-                } else if (ySpeed & myTop < otherBottom) {
-                    snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'red', this.x,this.y+snakeSize)
-                } else if (xSpeed & myLeft < otherRight) {
-                    snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x-snakeSize,this.y)
-                } else if (xSpeed & myRight > otherLeft) {
-                    snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'red', this.x-snakeSize,this.y)
-                    }
-
-                    return (crash);
-              }
+                    } else if (ySpeed & myBottom > otherTop) {
+                        snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'lightblue', 'darkblue',this.x,this.y-snakeSize)
+                    } else if (ySpeed & myTop < otherBottom) {
+                        snake = new component(snakeSizeX, snakeSizeY+=snakeSize, 'lightblue', 'darkblue', this.x,this.y+snakeSize)
+                    } else if (xSpeed & myLeft < otherRight) {
+                        snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'lightblue', 'darkblue', this.x-snakeSize,this.y)
+                    } else if (xSpeed & myRight > otherLeft) {
+                        snake = new component(snakeSizeX+=snakeSize, snakeSizeY, 'lightblue', 'darkblue', this.x-snakeSize,this.y)
+                        }
+                        return (crash);
+                }
             this.crashBorder = function() {
                 let myLeft = this.x;
                 let myRight = this.x + (this.width);
                 let myTop = this.y;
                 let myBottom = this.y + (this.height);
-                topBorder = canvasHeight - snakeSizeX;
-                bottomBorder = snakeSizeX ;
+                topBorder = 100;
+                bottomBorder = canvasHeight;
                 leftBorder = 0;
                 rightBorder = canvasWidth
                 let crash = false;
-                if ((myBottom < bottomBorder) ||
+                <!-- console.log(myLeft, leftBorder) -->
+                //console.log(myBottom > bottomBorder,myTop < topBorder ,myRight > rightBorder ,myLeft < leftBorder)
+                if ((myBottom > bottomBorder) || // bottom border is total length, if myBottom exceeds, has crashed
+                    (myTop < topBorder) ||
                     (myRight > rightBorder) ||
-                    (myTop > topBorder) ||
                     (myLeft < leftBorder)) {
                         crash=true
                     }
                     return crash;
             }
-          }
-
-          let xSpeed = 0
-          let ySpeed = 0
-          updateGameArea = () => {
-            if (snake.crashWith(food)) {
-                food = new component(foodSize, foodSize, 'black', Math.random()*canvasHeight - 2*foodSize, Math.random()*canvasWidth - 2*foodSize)
-            } else if (snake.crashBorder()) {
-                restartBtn = new btn(50, 20, 'purple', 500,40)
-                restartBtn.update();
-                console.log('clicked?',restartBtn.clicked())
-                myGameArea.stop();
-                    if (restartBtn.clicked()) {
-                        let xSpeed = 0
-                        let ySpeed = 0
-                        let snakeSizeX = 30
-                        let snakeSizeY = 30
-                        let snakeSize = 30
-                        startGame()
+            if (clickable) {
+                this.clicked = function() {
+                    var myleft = this.x;
+                    var myright = this.x + (this.width);
+                    var mytop = this.y;
+                    var mybottom = this.y + (this.height);
+                    var clicked = true;
+                    if ((mybottom < myGameArea.y) || (mytop > myGameArea.y) || (myright < myGameArea.x) || (myleft > myGameArea.x)) {
+                      clicked = false;
                     }
-            } else {
-                myGameArea.clear();
-                if (myGameArea.key && myGameArea.key == 37 || myGameArea.key == 65) {
-                    xSpeed = -5; 
-                    ySpeed = 0;
-                } else if (myGameArea.key && myGameArea.key == 39 || myGameArea.key == 68) {
-                    xSpeed = 5;
-                    ySpeed = 0; 
-                } else if (myGameArea.key && myGameArea.key == 38 || myGameArea.key == 87) {
-                    xSpeed = 0;
-                    ySpeed = -5; 
-                } else if (myGameArea.key && myGameArea.key == 40 || myGameArea.key == 83) {
-                    xSpeed = 0;
-                    ySpeed = 5;
-                } 
+                return clicked;
+                }
+            }
+        }
 
-              }
-              snake.x += xSpeed
-              snake.y += ySpeed
-              snake.update();
-              food.update();
+        move_snake = () => {
+            const head = {x: snake.x + xSpeed, y: snake.y + ySpeed}
+            newSnakes = [snake.x]
+            newSnakes.unshift()
+            newSnakes.pop()
+        }
+
+        let xSpeed = 0
+        let ySpeed = 0
+        let paused = false
+        pausedClicked = () =>{paused = !paused}
+        updateGameArea = () => {
+        if (snake.crashWith(food)) {
+            food = new component(foodSize, foodSize, 'bisque', 'burlywood', Math.abs(Math.random()*canvasWidth - 3*foodSize), 
+            Math.abs(Math.random()*(canvasHeight-100) + foodSize +100), false, true)
+        } else if (myGameArea.x && myGameArea.y) {
+            console.log('hovering')
+            if (pause.clicked()) {
+                console.log('clicked')
+            }
+
+        } else {
+            myGameArea.clear();
+            if (myGameArea.key && myGameArea.key == 37 || myGameArea.key == 65) {
+                xSpeed = -5; 
+                ySpeed = 0;
+            } else if (myGameArea.key && myGameArea.key == 39 || myGameArea.key == 68) {
+                xSpeed = 5;
+                ySpeed = 0; 
+            } else if (myGameArea.key && myGameArea.key == 38 || myGameArea.key == 87) {
+                xSpeed = 0;
+                ySpeed = -5; 
+            } else if (myGameArea.key && myGameArea.key == 40 || myGameArea.key == 83) {
+                xSpeed = 0;
+                ySpeed = 5;
+            } else if (snake.crashBorder()) {
+                myGameArea.stop();
+                console.log('game over')
+            }
+
+            }
+            snake.x += xSpeed
+            snake.y += ySpeed
+            if (!paused) {
+                snake.update();
+                food.update();
+            }
+            move_snake()
+            header.update()
+            pause.update()
           }
     </script>
 </head>
